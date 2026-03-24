@@ -1,0 +1,89 @@
+#!/bin/sh
+
+FILE="$1"
+APPNAME=$(echo "$FILE" | tr '_-.' '\n' | head -1)
+
+APP="$2"
+APPDIR="$APP.AppDir"
+
+mkdir -p tmp "$APPDIR" && cp "$FILE" tmp/
+cd tmp || exit 1
+
+# Check if the file is an archive
+[ -e ./*7z ] && 7z x ./*7z 2>/dev/null && rm -f ./*7z
+[ -e ./*.deb ]&& ar x ./*.deb && rm -f ./*.deb && tar fx ./data.tar* && rm -f ./*tar.*
+[ -e ./*tar.* ] && tar fx ./*tar.* && rm -f ./*tar.*
+[ -e ./*zip ] && unzip -qq ./*zip 1>/dev/null && rm -f ./*zip
+
+mv ./* ../"$APPDIR"/ && mv ../"$APPDIR" ./ && cd "$APPDIR" || exit 1
+
+# Find main executable
+EXEC=$(find . -type f -name "$APP" -executable 2>/dev/null | sed 's/^.//g' | head -1)
+[ -z "$EXEC" ] && echo "No executable found, exiting." && exit 0
+
+# create the AppRun
+cat > "AppRun" <<EOF
+#!/bin/sh
+HERE=\$(dirname "\$(readlink -f "\$0")")
+exec "\$HERE/$EXEC" "\$@"
+EOF
+chmod a+x "AppRun"
+
+# Add .desktop file
+if [ ! -f ./*.desktop ] || [ ! -f ../../*.desktop ]; then
+	cat <<-HEREDOC >> "$APP.desktop"
+	[Desktop Entry]
+	Type=Application
+	Name=$APP
+	Exec=$(echo "$EXEC" | sed 's#^/##g')
+	Icon=$APP
+	Terminal=false
+	Categories=Utility;
+	HEREDOC
+fi
+
+# Add icon
+ICON_ENTRY=$(grep "^Icon=" ./*.desktop | head -1 | sed 's:.*/::' | sed 's/.png//g; s/.svg//g')
+ICON=$(find . -maxdepth 10 -type f \( -iname "$ICON_ENTRY.png" -o -iname "$ICON_ENTRY.svg" -o -iname "$ICON_ENTRY.xpm" \) 2>/dev/null)
+if [ -z "$ICON" ] || [ ! -f ../../"$ICON_ENTRY.png" ] || [ ! -f ../../"$ICON_ENTRY.svg" ] || [ ! -f ../../"$ICON_ENTRY.xpm" ]; then
+	printf '\x89PNG\r\n\x1a\n' > "$APP.png"
+else
+	cp "$ICON" ./
+fi
+
+# Finalize
+cd .. || exit 1
+if [ ! -f "$APPDIR"/*.desktop ]; then
+	cp ../*.desktop "$APPDIR"/ 2>/dev/null
+fi
+if [ ! -f "$APPDIR"/"$ICON.png" ] || [ ! -f "$APPDIR"/"$ICON.svg" ] || [ ! -f "$APPDIR"/"$ICON.xpm" ]; then
+	cp ../"$ICON".png "$APPDIR"/ 2>/dev/null || cp ../"$ICON".svg "$APPDIR"/ 2>/dev/null || cp ../"$ICON".xpm "$APPDIR"/ 2>/dev/null
+fi
+
+# Export to AppImage
+_appimagetool() {
+	if ! command -v appimagetool >/dev/null; then
+		[ ! -f ./appimagetool ] && \
+		curl -#Lo appimagetool https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-"$ARCH".AppImage && \
+		chmod a+x ./appimagetool
+		./appimagetool "$@"
+	else
+		appimagetool "$@"
+	fi
+}
+
+extract_version() {
+	BIN="$1"
+	VERSION=$(strings "$APPDIR/$EXEC" 2>/dev/null | grep -Eo '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -n1)
+	[ -n "$VERSION" ] && echo "$VERSION" || echo "1.0.0"
+}
+
+ARCH=x86_64 VERSION="$VERSION" _appimagetool -s "$APPDIR" 2>&1
+
+if ! ls ./*.AppImage >/dev/null 2>&1; then
+	echo "No AppImage available."
+	exit 1
+fi
+
+cd .. || exit 1
+mv tmp/*AppImage* ./
