@@ -16,5 +16,10 @@ Example
 
 https://github.com/user-attachments/assets/a4006936-86b4-4aa5-ac1c-e3e10a5d8773
 
+## Tips
+Add a icon and a .desktop file near the script to use them in the root of the AppDir.
+
+In case no .desktop file and no icon is found, the script will create dumb ones.
+
 ## Status
 This is still an experimental script that only works for portable apps.
