@@ -1,9 +1,9 @@
 #!/bin/sh
 
 FILE="$1"
-APPNAME=$(echo "$FILE" | tr '_-.' '\n' | head -1)
-
 APP="$2"
+[ -z "$APP" ] && APP="$FILE"
+
 APPDIR="$APP.AppDir"
 
 mkdir -p tmp "$APPDIR" && cp "$FILE" tmp/
@@ -73,7 +73,6 @@ _appimagetool() {
 }
 
 extract_version() {
-	BIN="$1"
 	VERSION=$(strings "$APPDIR/$EXEC" 2>/dev/null | grep -Eo '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -n1)
 	[ -n "$VERSION" ] && echo "$VERSION" || echo "1.0.0"
 }
