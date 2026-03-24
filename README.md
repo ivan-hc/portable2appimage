@@ -5,6 +5,8 @@ A quick helper based on https://github.com/ivan-hc/AppImage-tips
 
 NOTE, this is for apps that already work standalone
 
+**WARNING: This is a work in progress. Use at your own risk!**
+
 ## Usage
 Where FILE is a static/dinamic portable binary or a 7z/tar/zip/deb package containing the portable app, and "appname" is the name of the command
 ```
