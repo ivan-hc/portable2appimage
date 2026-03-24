@@ -19,6 +19,8 @@ mv ./* ../"$APPDIR"/ && mv ../"$APPDIR" ./ && cd "$APPDIR" || exit 1
 
 # Find main executable
 EXEC=$(find . -type f -name "$APP" -executable 2>/dev/null | sed 's/^.//g' | head -1)
+VERSION=$(strings "$(find . -type f -name "$APP" -executable 2>/dev/null | head -1)" 2>/dev/null | grep -Eo '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -n1)
+[ -n "$VERSION" ] && echo "$VERSION" || echo "1.0.0"
 [ -z "$EXEC" ] && echo "No executable found, exiting." && exit 0
 
 # create the AppRun
@@ -70,11 +72,6 @@ _appimagetool() {
 	else
 		appimagetool "$@"
 	fi
-}
-
-extract_version() {
-	VERSION=$(strings "$APPDIR/$EXEC" 2>/dev/null | grep -Eo '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -n1)
-	[ -n "$VERSION" ] && echo "$VERSION" || echo "1.0.0"
 }
 
 ARCH=x86_64 VERSION="$VERSION" _appimagetool -s "$APPDIR" 2>&1
