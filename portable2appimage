@@ -10,10 +10,10 @@ mkdir -p tmp "$APPDIR" && cp "$FILE" tmp/
 cd tmp || exit 1
 
 # Check if the file is an archive
-[ -e ./*7z ] && 7z x ./*7z 2>/dev/null && rm -f ./*7z
-[ -e ./*.deb ]&& ar x ./*.deb && rm -f ./*.deb && tar fx ./data.tar* && rm -f ./*tar.*
-[ -e ./*tar.* ] && tar fx ./*tar.* && rm -f ./*tar.*
-[ -e ./*zip ] && unzip -qq ./*zip 1>/dev/null && rm -f ./*zip
+if test -e ./*7z; then 7z x ./*7z 2>/dev/null && rm -f ./*7z; fi
+if test ./*.deb; then ar x ./*.deb && rm -f ./*.deb && tar fx ./data.tar* && rm -f ./*tar.*; fi
+if test -e ./*tar.*; then tar fx ./*tar.* && rm -f ./*tar.*; fi
+if test -e ./*zip; then unzip -qq ./*zip 1>/dev/null && rm -f ./*zip; fi
 
 mv ./* ../"$APPDIR"/ && mv ../"$APPDIR" ./ && cd "$APPDIR" || exit 1
 
@@ -32,7 +32,7 @@ EOF
 chmod a+x "AppRun"
 
 # Add .desktop file
-if [ ! -f ./*.desktop ] || [ ! -f ../../*.desktop ]; then
+if ! test -f ./*.desktop || ! test -f ../../*.desktop; then
 	cat <<-HEREDOC >> "$APP.desktop"
 	[Desktop Entry]
 	Type=Application
@@ -55,7 +55,7 @@ fi
 
 # Finalize
 cd .. || exit 1
-if [ ! -f "$APPDIR"/*.desktop ]; then
+if ! test -f "$APPDIR"/*.desktop; then
 	cp ../*.desktop "$APPDIR"/ 2>/dev/null
 fi
 if [ ! -f "$APPDIR"/"$ICON.png" ] || [ ! -f "$APPDIR"/"$ICON.svg" ] || [ ! -f "$APPDIR"/"$ICON.xpm" ]; then
