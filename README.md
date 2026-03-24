@@ -8,13 +8,24 @@ NOTE, this is for apps that already work standalone
 **WARNING: This is a work in progress. Use at your own risk!**
 
 ## Usage
-Where FILE is a static/dinamic portable binary or a 7z/tar/zip/deb package containing the portable app, and "appname" is the name of the command
-```
-portable2appimage "FILE" "appname"
-```
-Is recommended to quote the argument if it contain spaces.
+Is recommended to quote the argument if it contain spaces. This command must run against a file.
 
-Example
+Where FILE is the file name (it may be an executable or a 7z/tar/zip/deb package), if the file is an executable, just run the following command:
+```
+portable2appimage "FILE"
+```
+
+Where APP is the name of the executable and FILE is a 7z/tar/zip/deb archive that contains it, run the following command:
+```
+portable2appimage "FILE" "APP"
+```
+
+Optionally you can set a VERSION manually. Run the following command:
+```
+portable2appimage "FILE" "APP" "VERSION"
+```
+
+## EXAMPLE
 
 https://github.com/user-attachments/assets/a4006936-86b4-4aa5-ac1c-e3e10a5d8773
 
