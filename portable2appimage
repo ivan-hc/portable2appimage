@@ -170,7 +170,7 @@ fi
 _appimagetool() {
 	if ! command -v appimagetool >/dev/null; then
 		[ ! -f ./appimagetool ] && \
-		curl -#Lo appimagetool https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-"$ARCH".AppImage && \
+		curl -#Lo appimagetool https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-"$(uname -m)".AppImage && \
 		chmod a+x ./appimagetool
 		./appimagetool "$@"
 	else
@@ -178,7 +178,7 @@ _appimagetool() {
 	fi
 }
 
-[ -z "$arch" ] && arch="x86_64"
+[ -z "$arch" ] && arch=$(uname -m)
 
 if [ -n "$4" ]; then
 	UPINFO="gh-releases-zsync|$4|*$arch.AppImage.zsync"
