@@ -1,6 +1,6 @@
 #!/bin/sh
 
-P2AVER="0.0.5"
+P2AVER="0.0.6"
 
 FILE="$1"
 
@@ -43,8 +43,14 @@ mv ./* ../"$APPDIR"/ && mv ../"$APPDIR" ./ && cd "$APPDIR" || exit 1
 
 EXEC=$(find . -maxdepth 10 -type f -name "$APP" -executable 2>/dev/null | sed 's/^.//g' | head -1)
 if [ -z "$EXEC" ]; then
-	EXEC=$(find . -maxdepth 10 -type f -name "$APP" 2>/dev/null | head -1)
-	[ -n "$EXEC" ] && chmod a+x "$EXEC"
+	EXEC_REFS=$(find . -maxdepth 10 -type f -name "$APP" 2>/dev/null)
+	for f in $EXEC_REFS; do
+		if head -c 4 "$f" | grep -q 'ELF'; then
+			echo "ELF binary" && chmod a+x "$f"
+		elif head -c 2 "$f" | grep -q '#!'; then
+			echo "Script" && chmod a+x "$f"
+		fi
+	done
 	EXEC=$(find . -maxdepth 10 -type f -name "$APP" -executable 2>/dev/null | sed 's/^.//g' | head -1)
 fi
 [ -z "$EXEC" ] && echo "No executable found, exiting." && exit 0
