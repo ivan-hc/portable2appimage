@@ -1,6 +1,6 @@
 #!/bin/sh
 
-P2AVER="0.0.8"
+P2AVER="0.0.9"
 
 FILE="$1"
 
@@ -10,6 +10,8 @@ case "$1" in
 		printf "	portable2appimage \"FILE\"\n"
 		printf "	portable2appimage \"FILE\" \"APP\"\n"
 		printf "	portable2appimage \"FILE\" \"APP\" \"VERSION\"\n"
+		printf "	portable2appimage \"FILE\" \"APP\" \"VERSION\" \"USER|REPO|TAG\"\n"
+		printf "	portable2appimage \"FILE\" \"APP\" \"USER|REPO|TAG\"\n"
 		printf "\n See https://github.com/ivan-hc/portable2appimage for more information.\n\n"
 		exit 0
 		;;
@@ -19,6 +21,10 @@ case "$1" in
 esac	
 
 APP="$2"
+if echo "$2" | grep -q "|"; then
+	APP="$FILE"
+	UPINFO="$2"
+fi
 [ -z "$APP" ] && APP="$FILE"
 
 APPDIR="$APP.AppDir"
@@ -62,6 +68,9 @@ fi
 ################################################
 
 if [ -z "$3" ]; then
+	VERSION=$(strings "$(find . -type f -name "$APP" -executable 2>/dev/null | head -1)" 2>/dev/null | grep -Eo '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -n1)
+elif echo "$3" | grep -q "|"; then
+	UPINFO="$3"
 	VERSION=$(strings "$(find . -type f -name "$APP" -executable 2>/dev/null | head -1)" 2>/dev/null | grep -Eo '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -n1)
 else
 	VERSION="$3"
@@ -161,7 +170,15 @@ _appimagetool() {
 	fi
 }
 
-ARCH=x86_64 VERSION="$VERSION" _appimagetool -s "$APPDIR" 2>&1
+if [ -n "$4" ]; then
+	UPINFO="gh-releases-zsync|$4|*x86_64.AppImage.zsync"
+	ARCH=x86_64 VERSION="$VERSION" _appimagetool "$APPDIR" 2>&1
+elif [ -n "$UPINFO" ]; then
+	UPINFO="gh-releases-zsync|$UPINFO|*x86_64.AppImage.zsync"
+	ARCH=x86_64 VERSION="$VERSION" _appimagetool -u "$UPINFO" "$APPDIR" 2>&1
+else
+	ARCH=x86_64 VERSION="$VERSION" _appimagetool -u "$UPINFO" "$APPDIR" 2>&1
+fi
 
 if ! ls ./*.AppImage >/dev/null 2>&1; then
 	echo "No AppImage available."
