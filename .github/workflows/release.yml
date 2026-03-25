@@ -28,6 +28,11 @@ jobs:
       run: |
         #sudo sysctl -w kernel.apparmor_restrict_unprivileged_unconfined=0
         #sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
+        URL="https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage"
+        wget -c "$URL" -O appimagetool && chmod a+x ./appimagetool
+        export PATH="$PWD":"${PATH}"
+        
         chmod a+x ./portable2appimage
         architectures="x86_64 aarch64 i686"
         for a in $architectures; do
