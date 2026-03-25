@@ -1,6 +1,6 @@
 #!/bin/sh
 
-P2AVER="0.0.9"
+P2AVER="1.0.0"
 
 FILE="$1"
 
