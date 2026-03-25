@@ -1,6 +1,6 @@
 #!/bin/sh
 
-P2AVER="0.0.3"
+P2AVER="0.0.4"
 
 FILE="$1"
 
@@ -67,6 +67,10 @@ EOF
 chmod a+x "AppRun"
 
 # Add .desktop file
+DESKTOP_FILE=$(find . -maxdepth 10 -type f -name "*.desktop" -exec grep -q "^Exec=.*fdm" {} \; -exec grep -q "^Icon=" {} \; -print | head -1)
+if [ -n "$DESKTOP_FILE" ]; then
+	cp "$DESKTOP_FILE" ./
+fi
 if ! test -f ./*.desktop || ! test -f ../../*.desktop; then
 	cat <<-HEREDOC >> "$APP.desktop"
 	[Desktop Entry]
@@ -80,7 +84,8 @@ if ! test -f ./*.desktop || ! test -f ../../*.desktop; then
 fi
 
 # Add icon
-ICON_ENTRY=$(grep "^Icon=" ./*.desktop | head -1 | sed 's:.*/::' | sed 's/.png//g; s/.svg//g')
+ICON_ENTRY=$(cat ./*.desktop | grep "^Icon=" | head -1 | sed 's:.*/::' | sed 's/.png//g; s/.svg//g; s/Icon=//g')
+sed -i "0,/^Icon=/s|^Icon=.*|Icon=$ICON_ENTRY|" ./*.desktop 2>/dev/null
 ICON=$(find . -maxdepth 10 -type f \( -iname "$ICON_ENTRY.png" -o -iname "$ICON_ENTRY.svg" -o -iname "$ICON_ENTRY.xpm" \) 2>/dev/null)
 if [ -z "$ICON" ] || [ ! -f ../../"$ICON_ENTRY.png" ] || [ ! -f ../../"$ICON_ENTRY.svg" ] || [ ! -f ../../"$ICON_ENTRY.xpm" ]; then
 	printf '\x89PNG\r\n\x1a\n' > "$APP.png"
