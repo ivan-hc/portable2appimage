@@ -74,3 +74,12 @@ I have many more reasons to suggest, but I'll leave it up to you to discover the
 
 ### Add a custom icon and launcher
 Add a icon and a .desktop file near the script to use them in the root of the AppDir.
+
+### Use custom AppRun
+As for custom icon and .desktop file, it is possible to use custom AppRun scripts if placed near this tool.
+
+In this example, linuxtoys:
+
+https://github.com/user-attachments/assets/2145ac2b-3136-41c5-97ef-05f96c0aa0f7
+
+
