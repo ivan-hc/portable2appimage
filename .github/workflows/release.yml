@@ -29,7 +29,11 @@ jobs:
         #sudo sysctl -w kernel.apparmor_restrict_unprivileged_unconfined=0
         #sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
         chmod a+x ./portable2appimage
-        ./portable2appimage portable2appimage "ivan-hc|portable2appimage|latest"
+        architectures="x86_64 aarch64 i686"
+        for a in $architectures; do
+          export arch="$a"
+          ./portable2appimage portable2appimage "ivan-hc|portable2appimage|latest"
+        done
         cat portable2appimage | grep "^P2AVER" | awk -F'"' '{print $2}' > ./version
         mkdir dist
         mv *AppImage* dist/
