@@ -1,6 +1,6 @@
 #!/bin/sh
 
-P2AVER="1.0.1"
+P2AVER="1.0.2"
 
 FILE="$1"
 
@@ -68,7 +68,10 @@ fi
 ################################################
 
 if [ -z "$3" ]; then
-	VERSION=$(strings "$(find . -type f -name "$APP" -executable 2>/dev/null | head -1)" 2>/dev/null | grep -Eo '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -n1)
+	VERSION=$(echo "$FILE" | grep -Eo "([0-9]{1,}\.)+[0-9]{1,}")
+	if [ -z "$VERSION" ]; then
+		VERSION=$(strings "$(find . -type f -name "$APP" -executable 2>/dev/null | head -1)" 2>/dev/null | grep -Eo '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -n1)
+	fi
 elif echo "$3" | grep -q "|"; then
 	UPINFO="$3"
 	VERSION=$(strings "$(find . -type f -name "$APP" -executable 2>/dev/null | head -1)" 2>/dev/null | grep -Eo '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -n1)
