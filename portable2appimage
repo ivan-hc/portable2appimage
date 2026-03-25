@@ -1,6 +1,6 @@
 #!/bin/sh
 
-P2AVER="0.0.6"
+P2AVER="0.0.7"
 
 FILE="$1"
 
@@ -23,8 +23,10 @@ APP="$2"
 
 APPDIR="$APP.AppDir"
 
-mkdir -p tmp "$APPDIR" && cp "$FILE" tmp/
-cd tmp || exit 1
+mkdir -p "$APP"-workdir.tmp "$APPDIR"
+rm -Rf ./*.AppDir/* ./"$APP"-workdir.tmp/*
+cp "$FILE" "$APP"-workdir.tmp/
+cd "$APP"-workdir.tmp || exit 1
 
 ################################################
 # Check if FILE is an archive
@@ -78,7 +80,7 @@ EOF
 chmod a+x "AppRun"
 
 # Add .desktop file
-DESKTOP_FILE=$(find . -maxdepth 10 -type f -name "*.desktop" -exec grep -q "^Exec=.*fdm" {} \; -exec grep -q "^Icon=" {} \; -print | head -1)
+DESKTOP_FILE=$(find . -maxdepth 10 -type f -name "*.desktop" -exec grep -q "^Exec=.*$APP" {} \; -exec grep -q "^Icon=" {} \; -print | head -1)
 if [ -n "$DESKTOP_FILE" ]; then
 	cp "$DESKTOP_FILE" ./
 fi
@@ -93,11 +95,41 @@ if ! test -f ./*.desktop || ! test -f ../../*.desktop; then
 	Categories=Utility;
 	HEREDOC
 fi
+while ! desktop-file-validate ./*.desktop 2>/dev/null; do
+	echo "Fixing issues..."
+
+	# 1. Remove duplicate [Desktop Entry] headers (keep the first)
+	sed -i '0,/^\[Desktop Entry\]/!{/^\[Desktop Entry\]/d}' ./*.desktop
+
+	# 2. Remove deprecated Encoding keys
+	sed -i '/^Encoding=/d' ./*.desktop
+
+	# 3. Remove duplicate keys in [Desktop Entry] (keep first occurrence)
+	for key in Name Exec Icon Terminal Type Categories Comment; do
+		sed -i "0,/^$key=/!{/^$key=/d}" ./*.desktop
+	done
+
+	# 4. Fix Categories: remove unregistered values
+	STANDARD_CATS="AudioVideo|Development|Education|Game|Graphics|Network|Office|Settings|System|Utility"
+	awk -v cats="$STANDARD_CATS" '
+	/^Categories=/ {
+		split(substr($0,12), a, ";")
+		out="Categories="
+		for (i in a) {
+			if (a[i] ~ "^("cats")$") out=out a[i] ";"
+		}
+		print out
+		next
+	}
+	{print}
+	' ./*.desktop > "$APP.tmp" && mv "$APP.tmp" ./*.desktop
+done
 
 # Add icon
 ICON_ENTRY=$(cat ./*.desktop | grep "^Icon=" | head -1 | sed 's:.*/::' | sed 's/.png//g; s/.svg//g; s/Icon=//g')
+echo $ICON_ENTRY
 sed -i "0,/^Icon=/s|^Icon=.*|Icon=$ICON_ENTRY|" ./*.desktop 2>/dev/null
-ICON=$(find . -maxdepth 10 -type f \( -iname "$ICON_ENTRY.png" -o -iname "$ICON_ENTRY.svg" -o -iname "$ICON_ENTRY.xpm" \) 2>/dev/null)
+ICON=$(find . -maxdepth 10 -type f \( -iname "$ICON_ENTRY.png" -o -iname "$ICON_ENTRY.svg" -o -iname "$ICON_ENTRY.xpm" \) 2>/dev/null | head -1)
 if [ -z "$ICON" ] || [ ! -f ../../"$ICON_ENTRY.png" ] || [ ! -f ../../"$ICON_ENTRY.svg" ] || [ ! -f ../../"$ICON_ENTRY.xpm" ]; then
 	printf '\x89PNG\r\n\x1a\n' > "$APP.png"
 else
@@ -136,4 +168,4 @@ if ! ls ./*.AppImage >/dev/null 2>&1; then
 fi
 
 cd .. || exit 1
-mv tmp/*AppImage* ./
+mv "$APP"-workdir.tmp/*AppImage* ./
