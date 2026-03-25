@@ -1,6 +1,6 @@
 #!/bin/sh
 
-P2AVER="1.0.0"
+P2AVER="1.0.1"
 
 FILE="$1"
 
@@ -81,12 +81,17 @@ fi
 ################################################
 
 # Add AppRun
-cat > "AppRun" <<EOF
-#!/bin/sh
-HERE=\$(dirname "\$(readlink -f "\$0")")
-exec "\$HERE/$EXEC" "\$@"
-EOF
-chmod a+x "AppRun"
+if test -f ../../AppRun; then
+	cp ../../AppRun ./AppRun && chmod a+x ./AppRun
+else
+	rm -f ./AppRun
+	cat <<-HEREDOC >> "AppRun"
+	#!/bin/sh
+	HERE=\$(dirname "\$(readlink -f "\$0")")
+	exec "\$HERE/$EXEC" "\$@"
+	HEREDOC
+	chmod a+x "AppRun"
+fi
 
 # Add .desktop file
 DESKTOP_FILE=$(find . -maxdepth 10 -type f -name "*.desktop" -exec grep -q "^Exec=.*$APP" {} \; -exec grep -q "^Icon=" {} \; -print | head -1)
