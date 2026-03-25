@@ -82,4 +82,17 @@ In this example, linuxtoys:
 
 https://github.com/user-attachments/assets/2145ac2b-3136-41c5-97ef-05f96c0aa0f7
 
+### Create AppImages for more architectures
+Regardless of your architecture, you can use `appimagetool` to create AppImage packages for multiple architectures (provided the executables are compatible with those architectures).
 
+To do this with portable2appimage, you need to export the $arch variable, like this:
+```
+export arch=aarch64
+```
+for the arm64/aarch 64 architecture, or
+```
+export arch=i686
+```
+for the 32-bit/i386/i486/i586/i686 architecture.
+
+By default, portable2appimage uses x86_64, also known as amd64.
