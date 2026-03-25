@@ -1,6 +1,6 @@
 #!/bin/sh
 
-P2AVER="0.0.7"
+P2AVER="0.0.8"
 
 FILE="$1"
 
@@ -127,13 +127,14 @@ done
 
 # Add icon
 ICON_ENTRY=$(cat ./*.desktop | grep "^Icon=" | head -1 | sed 's:.*/::' | sed 's/.png//g; s/.svg//g; s/Icon=//g')
-echo $ICON_ENTRY
 sed -i "0,/^Icon=/s|^Icon=.*|Icon=$ICON_ENTRY|" ./*.desktop 2>/dev/null
 ICON=$(find . -maxdepth 10 -type f \( -iname "$ICON_ENTRY.png" -o -iname "$ICON_ENTRY.svg" -o -iname "$ICON_ENTRY.xpm" \) 2>/dev/null | head -1)
-if [ -z "$ICON" ] || [ ! -f ../../"$ICON_ENTRY.png" ] || [ ! -f ../../"$ICON_ENTRY.svg" ] || [ ! -f ../../"$ICON_ENTRY.xpm" ]; then
-	printf '\x89PNG\r\n\x1a\n' > "$APP.png"
-else
+if [ -f ../../"$ICON_ENTRY.png" ] || [ -f ../../"$ICON_ENTRY.svg" ] || [ -f ../../"$ICON_ENTRY.xpm" ]; then
+	cp ../../"$ICON_ENTRY.png" ./ 2>/dev/null || cp ../../"$ICON_ENTRY.svg" ./ 2>/dev/null || cp ../../"$ICON_ENTRY.xpm" ./ 2>/dev/null
+elif [ -n "$ICON" ]; then
 	cp "$ICON" ./
+else
+	printf '\x89PNG\r\n\x1a\n' > "$APP.png"
 fi
 
 # Finalize
