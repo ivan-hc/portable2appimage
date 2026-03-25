@@ -1,6 +1,6 @@
 #!/bin/sh
 
-P2AVER="1.0.2"
+P2AVER="1.0.3"
 
 FILE="$1"
 
@@ -178,14 +178,16 @@ _appimagetool() {
 	fi
 }
 
+[ -z "$arch" ] && arch="x86_64"
+
 if [ -n "$4" ]; then
-	UPINFO="gh-releases-zsync|$4|*x86_64.AppImage.zsync"
-	ARCH=x86_64 VERSION="$VERSION" _appimagetool "$APPDIR" 2>&1
+	UPINFO="gh-releases-zsync|$4|*$arch.AppImage.zsync"
+	ARCH="$arch" VERSION="$VERSION" _appimagetool "$APPDIR" 2>&1
 elif [ -n "$UPINFO" ]; then
-	UPINFO="gh-releases-zsync|$UPINFO|*x86_64.AppImage.zsync"
-	ARCH=x86_64 VERSION="$VERSION" _appimagetool -u "$UPINFO" "$APPDIR" 2>&1
+	UPINFO="gh-releases-zsync|$UPINFO|*$arch.AppImage.zsync"
+	ARCH="$arch" VERSION="$VERSION" _appimagetool -u "$UPINFO" "$APPDIR" 2>&1
 else
-	ARCH=x86_64 VERSION="$VERSION" _appimagetool -u "$UPINFO" "$APPDIR" 2>&1
+	ARCH="$arch" VERSION="$VERSION" _appimagetool -u "$UPINFO" "$APPDIR" 2>&1
 fi
 
 if ! ls ./*.AppImage >/dev/null 2>&1; then
