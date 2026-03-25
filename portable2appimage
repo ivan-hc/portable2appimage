@@ -31,7 +31,7 @@ cd tmp || exit 1
 ################################################
 
 if test -e ./*7z; then 7z x ./*7z 2>/dev/null && rm -f ./*7z; fi
-if test ./*.deb; then ar x ./*.deb && rm -f ./*.deb && tar fx ./data.tar* && rm -f ./*tar.*; fi
+if test -e ./*.deb; then ar x ./*.deb && rm -f ./*.deb && tar fx ./data.tar* && rm -f ./*tar.*; fi
 if test -e ./*tar.*; then tar fx ./*tar.* && rm -f ./*tar.*; fi
 if test -e ./*zip; then unzip -qq ./*zip 1>/dev/null && rm -f ./*zip; fi
 
