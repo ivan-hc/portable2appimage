@@ -25,11 +25,52 @@ Optionally you can set a VERSION manually. Run the following command:
 portable2appimage "FILE" "APP" "VERSION"
 ```
 
-## EXAMPLE
+If you want to made your AppImage updateable using `zsync` and `appimageupdatetool`, you need to set "USER|REPO|TAG", like this:
+```
+portable2appimage "FILE" "APP" "VERSION" "USER|REPO|TAG"
+```
+or like this directly (not recommended)
+```
+portable2appimage "FILE" "APP" "USER|REPO|TAG"
+```
 
-https://github.com/user-attachments/assets/a4006936-86b4-4aa5-ac1c-e3e10a5d8773
+NOTE: only github releases are supported for updates.
+
+## EXAMPLE
+In this video I will first create an AppImage of freedownloadmanager (binary name `fdm`) using the following command:
+```
+portable2appimage freedownloadmanager.deb fdm
+```
+Version is taken from the ELF binary and may be wrong, this is why it is necessary to set it.
+
+On the contrary, an AppImage of portable2appimage has the correct version, since it is on top of the file. In this example I also add "USER|REPO|TAG" for this repository, using this command:
+```
+portable2appimage portable2appimage portable2appimage "ivan|portable2appimage|latest"
+```
+This would not work until I don't upload the AppImage and the .zsync files in the "releases" section of this repository.
+
+https://github.com/user-attachments/assets/50c86d37-0c68-4854-b0bf-53be805aa53a
+
+This is an AppImage of Tixati instead. The script will automatically fix .desktop file validation errors:
+
+https://github.com/user-attachments/assets/7fce5906-0517-4186-b874-30af32c2dc34
+
+Finally, this one is ntsc-rs, binary name are two, you can pic just one, in our case `ntsc-rs-standalone`. The files contained in this archive are not set to "executable", the script is able to detect the indicated binary by checking whether it is an ELF file or a script:
+
+https://github.com/user-attachments/assets/69cbce05-a1f1-4963-9c66-2b4b0774787c
+
+And I could go on forever.
+
+As long as your program is already running on its own, exporting it as an AppImage is a breeze.
+
+## Why do it?
+An AppImage isn't just an archive format that can run the program without you having to extract it. AppImage can isolate a program's dotfiles using a .config or .home directory with the same name as the AppImage, so you don't clutter your system and can take your configurations anywhere, even on a USB stick. Furthermore, sandboxing via Bubblewrap using the right interfaces is a breeze. Not to mention integration via various tools, which simply extract the .desktop file and icon from the AppImage to integrate it into the menu.
+
+I have many more reasons to suggest, but I'll leave it up to you to discover the advantages.
+
+---------------------------------
 
 ## Tips
-Add a icon and a .desktop file near the script to use them in the root of the AppDir.
 
-In case no .desktop file and no icon is found, the script will create dumb ones.
+### Add a custom icon and launcher
+Add a icon and a .desktop file near the script to use them in the root of the AppDir.
