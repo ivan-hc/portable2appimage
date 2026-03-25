@@ -1,11 +1,9 @@
 # portable2appimage
-Convert standalone portable apps to AppImages (EXPERIMENTAL).
+Convert standalone portable apps to AppImages.
 
 An experimental helper based on https://github.com/ivan-hc/AppImage-tips that allows you to convert a standalone portable app to an AppImage.
 
----------------------------------
-
-**WARNING: This project is a work in progress. Use at your own risk!**
+NOTE, This tool is necessary for simple programs that already run independently and without the need for external libraries. To build more complex AppImage packages, see [Anylinux](https://github.com/pkgforge-dev/Anylinux-AppImages) or [Archimage](https://github.com/ivan-hc/ArchImage).
 
 ---------------------------------
 
