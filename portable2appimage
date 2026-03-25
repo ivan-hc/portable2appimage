@@ -1,6 +1,22 @@
 #!/bin/sh
 
+P2AVER="0.0.1"
+
 FILE="$1"
+
+case "$1" in
+	""|"-h"|"--help"|"help")
+		printf "\n USAGE:\n"
+		printf "	portable2appimage \"FILE\"\n"
+		printf "	portable2appimage \"FILE\" \"APP\"\n"
+		printf "	portable2appimage \"FILE\" \"APP\" \"VERSION\"\n\n"
+		exit 0
+		;;
+	"-v"|"--version"|"version")
+		printf "%b\n" "$P2AVER" && exit 0
+		;;
+esac	
+
 APP="$2"
 [ -z "$APP" ] && APP="$FILE"
 
