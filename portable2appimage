@@ -104,8 +104,12 @@ DESKTOP_FILE=$(find . -maxdepth 10 -type f -name "*.desktop" -exec grep -q "^Exe
 if [ -n "$DESKTOP_FILE" ]; then
 	cp "$DESKTOP_FILE" ./
 fi
-if test -f ./*.desktop || test -f ../../*.desktop || test -f ../*.desktop; then
-	cp ./*.desktop ./"$APP.desktop" 2>/dev/null || cp ../../*.desktop ./"$APP.desktop" 2>/dev/null || cp ../*.desktop ./"$APP.desktop" 2>/dev/null
+if test -f ./*.desktop; then
+	cp ./*.desktop ./"$APP.desktop" 2>/dev/null
+elif test -f ../../*.desktop; then
+	cp ../../*.desktop ./"$APP.desktop" 2>/dev/null
+elif test -f ../*.desktop; then
+	cp ../*.desktop ./"$APP.desktop" 2>/dev/null
 else
 	cat <<-HEREDOC >> "$APP.desktop"
 	[Desktop Entry]
@@ -148,23 +152,29 @@ while ! desktop-file-validate ./*.desktop 2>/dev/null; do
 done
 
 # Add icon
-ICON_ENTRY=$(cat ./*.desktop | grep "^Icon=" | head -1 | sed 's:.*/::' | sed 's/.png//g; s/.svg//g; s/Icon=//g')
+# Get icon name from .desktop file (strip path, extension, and prefix)
+ICON_ENTRY=$(grep -m1 "^Icon=" ./*.desktop 2>/dev/null | sed 's|.*/||; s/\.\(png\|svg\|xpm\)//; s/^Icon=//')
+
+# Update first Icon= line in .desktop files
 sed -i "0,/^Icon=/s|^Icon=.*|Icon=$ICON_ENTRY|" ./*.desktop 2>/dev/null
-ICON=$(find . -maxdepth 10 -type f \( -iname "$ICON_ENTRY.png" -o -iname "$ICON_ENTRY.svg" -o -iname "$ICON_ENTRY.xpm" \) 2>/dev/null | head -1)
-if [ -f ../../"$ICON_ENTRY.png" ] || [ -f ../../"$ICON_ENTRY.svg" ] || [ -f ../../"$ICON_ENTRY.xpm" ]; then
-	cp ../../"$ICON_ENTRY.png" ./ 2>/dev/null || cp ../../"$ICON_ENTRY.svg" ./ 2>/dev/null || cp ../../"$ICON_ENTRY.xpm" ./ 2>/dev/null
-elif [ -f ../"$ICON_ENTRY.png" ] || [ -f ../"$ICON_ENTRY.svg" ] || [ -f ../"$ICON_ENTRY.xpm" ]; then
-	cp ../"$ICON_ENTRY.png" ./ 2>/dev/null || cp ../"$ICON_ENTRY.svg" ./ 2>/dev/null || cp ../"$ICON_ENTRY.xpm" ./ 2>/dev/null
-elif [ -n "$ICON" ]; then
+
+# Search for icon in priority order
+get_icon() {
+	for dir in ../../ .. .; do
+		for ext in png svg xpm; do
+			[ -f "$dir/$ICON_ENTRY.$ext" ] && echo "$dir/$ICON_ENTRY.$ext" && return
+		done
+	done
+	find . -maxdepth 10 -type f \( -iname "$ICON_ENTRY.png" -o -iname "$ICON_ENTRY.svg" -o -iname "$ICON_ENTRY.xpm" \) 2>/dev/null | head -1
+}
+
+# Copy icon or download fallback
+ICON=$(get_icon)
+if [ -n "$ICON" ]; then
 	cp "$ICON" ./
 else
-	wget -q "https://portable-linux-apps.github.io/icons/$APP.png" -O "$ICON_ENTRY.png" 2>/dev/null || printf '\x89PNG\r\n\x1a\n' > "$ICON_ENTRY.png"
-fi
-
-# Finalize
-cd .. || exit 1
-if [ ! -f "$APPDIR"/"$ICON.png" ] || [ ! -f "$APPDIR"/"$ICON.svg" ] || [ ! -f "$APPDIR"/"$ICON.xpm" ]; then
-	cp ../"$ICON".png "$APPDIR"/ 2>/dev/null || cp ../"$ICON".svg "$APPDIR"/ 2>/dev/null || cp ../"$ICON".xpm "$APPDIR"/ 2>/dev/null
+	wget -q "https://portable-linux-apps.github.io/icons/$APP.png" -O "$ICON_ENTRY.png" 2>/dev/null || \
+		printf '\x89PNG\r\n\x1a\n' > "$ICON_ENTRY.png"
 fi
 
 ################################################
