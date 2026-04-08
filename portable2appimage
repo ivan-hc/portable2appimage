@@ -85,7 +85,9 @@ fi
 ################################################
 
 # Add AppRun
-if test -f ../../AppRun; then
+if test -f ../../../AppRun; then
+	cp ../../../AppRun ./AppRun && chmod a+x ./AppRun
+elif test -f ../../AppRun; then
 	cp ../../AppRun ./AppRun && chmod a+x ./AppRun
 elif test -f ../AppRun; then
 	cp ../AppRun ./AppRun && chmod a+x ./AppRun
@@ -104,7 +106,9 @@ DESKTOP_FILE=$(find . -maxdepth 10 -type f -name "*.desktop" -exec grep -q "^Exe
 if [ -n "$DESKTOP_FILE" ]; then
 	cp "$DESKTOP_FILE" ./
 fi
-if test -f ./*.desktop; then
+if test -f ../../../*.desktop; then
+	cp ../../../*.desktop ./"$APP.desktop" 2>/dev/null
+elif test -f ./*.desktop; then
 	cp ./*.desktop ./"$APP.desktop" 2>/dev/null
 elif test -f ../../*.desktop; then
 	cp ../../*.desktop ./"$APP.desktop" 2>/dev/null
@@ -160,7 +164,7 @@ sed -i "0,/^Icon=/s|^Icon=.*|Icon=$ICON_ENTRY|" ./*.desktop 2>/dev/null
 
 # Search for icon in priority order
 get_icon() {
-	for dir in ../../ .. .; do
+	for dir in ../../../ ../../ .. .; do
 		for ext in png svg xpm; do
 			[ -f "$dir/$ICON_ENTRY.$ext" ] && echo "$dir/$ICON_ENTRY.$ext" && return
 		done
