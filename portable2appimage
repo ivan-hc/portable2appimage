@@ -163,26 +163,24 @@ ICON_ENTRY=$(grep -m1 "^Icon=" ./*.desktop 2>/dev/null | sed 's|.*/||; s/\.\(png
 sed -i "0,/^Icon=/s|^Icon=.*|Icon=$ICON_ENTRY|" ./*.desktop 2>/dev/null
 
 # Search for icon in priority order
-get_icon() {
-	for ext in png svg xpm; do
-		if test -f ../*."$ext"; then
-			cp ../*."$ext" ./"$ICON_ENTRY.$ext"
-		elif test -f ../../*."$ext"; then
-			cp ../../*."$ext" ./"$ICON_ENTRY.$ext"
-		elif test -f ../../../*."$ext"; then
-			cp ../../../*."$ext" ./"$ICON_ENTRY.$ext"
-		fi
-	done
-	find . -maxdepth 10 -type f \( -iname "$ICON_ENTRY.png" -o -iname "$ICON_ENTRY.svg" -o -iname "$ICON_ENTRY.xpm" \) 2>/dev/null | head -1
-}
+for ext in png svg xpm; do
+	if test -f ../*."$ext"; then
+		cp ../*."$ext" ./"$ICON_ENTRY.$ext" && icon_found="true"
+	elif test -f ../../*."$ext"; then
+		cp ../../*."$ext" ./"$ICON_ENTRY.$ext" && icon_found="true"
+	elif test -f ../../../*."$ext"; then
+		cp ../../../*."$ext" ./"$ICON_ENTRY.$ext" && icon_found="true"
+	fi
+done
 
 # Copy icon or download fallback
-ICON=$(get_icon)
-if [ -n "$ICON" ]; then
-	cp "$ICON" ./
-else
-	wget -q "https://portable-linux-apps.github.io/icons/$APP.png" -O "$ICON_ENTRY.png" 2>/dev/null || \
-		printf '\x89PNG\r\n\x1a\n' > "$ICON_ENTRY.png"
+if [ -z "$icon_found" ]; then
+	ICON=$(find . -maxdepth 10 -type f \( -iname "$ICON_ENTRY.png" -o -iname "$ICON_ENTRY.svg" -o -iname "$ICON_ENTRY.xpm" \) 2>/dev/null | head -1)
+	if [ -n "$ICON" ]; then
+		cp "$ICON" ./
+	else
+		wget -q "https://portable-linux-apps.github.io/icons/$APP.png" -O "$ICON_ENTRY.png" 2>/dev/null || printf '\x89PNG\r\n\x1a\n' > "$ICON_ENTRY.png"
+	fi
 fi
 
 cd .. || exit 1
