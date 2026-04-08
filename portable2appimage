@@ -103,9 +103,6 @@ fi
 
 # Add .desktop file
 DESKTOP_FILE=$(find . -maxdepth 10 -type f -name "*.desktop" -exec grep -q "^Exec=.*$APP" {} \; -exec grep -q "^Icon=" {} \; -print | head -1)
-if [ -n "$DESKTOP_FILE" ]; then
-	cp "$DESKTOP_FILE" ./
-fi
 if test -f ../../../*.desktop; then
 	cp ../../../*.desktop ./"$APP.desktop" 2>/dev/null
 elif test -f ./*.desktop; then
@@ -114,6 +111,8 @@ elif test -f ../../*.desktop; then
 	cp ../../*.desktop ./"$APP.desktop" 2>/dev/null
 elif test -f ../*.desktop; then
 	cp ../*.desktop ./"$APP.desktop" 2>/dev/null
+elif [ -n "$DESKTOP_FILE" ]; then
+	cp "$DESKTOP_FILE" ./
 else
 	cat <<-HEREDOC >> "$APP.desktop"
 	[Desktop Entry]
