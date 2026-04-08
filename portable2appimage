@@ -157,7 +157,7 @@ done
 
 # Add icon
 # Get icon name from .desktop file (strip path, extension, and prefix)
-ICON_ENTRY=$(grep -m1 "^Icon=" ./*.desktop 2>/dev/null | sed 's|.*/||; s/\.\(png\|svg\|xpm\)//; s/^Icon=//')
+ICON_ENTRY=$(cat ./*.desktop | grep "^Icon=" | head -1 | sed 's:.*/::' | sed 's/.png//g; s/.svg//g; s/Icon=//g')
 
 # Update first Icon= line in .desktop files
 sed -i "0,/^Icon=/s|^Icon=.*|Icon=$ICON_ENTRY|" ./*.desktop 2>/dev/null
