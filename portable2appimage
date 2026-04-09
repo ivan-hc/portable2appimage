@@ -164,90 +164,11 @@ else
 	HEREDOC
 fi
 
-# Validate desktop file
-desktop-file-validate() {
-    local file="$1"
-    local errors=0
-
-    # 1. Check if file exists and is readable
-    if [ ! -f "$file" ]; then
-        echo "error: file '$file' does not exist" >&2
-        return 1
-    fi
-
-    # 2. Check for the exact [Desktop Entry] header on line 1
-    if ! head -n 1 "$file" | grep -q '^\[Desktop Entry\]$'; then
-        echo "error: file does not have a valid [Desktop Entry] header on the first line" >&2
-        ((errors++))
-    fi
-
-    # 3. Check for trailing whitespace (strictly forbidden by the spec)
-    if grep -q '[[:space:]]$' "$file"; then
-        echo "error: file contains trailing whitespace" >&2
-        ((errors++))
-    fi
-
-    # 4. Check for leading whitespace in keys (forbidden in main group)
-    if grep -q '^[[:space:]]*[A-Za-z]' "$file"; then
-        echo "error: keys contain leading whitespace" >&2
-        ((errors++))
-    fi
-
-    # Extract values (taking the first unlocalized one we find)
-    local type_val=$(grep -m1 '^Type=' "$file" | cut -d'=' -f2-)
-    local name_val=$(grep -m1 '^Name=' "$file" | cut -d'=' -f2-)
-    local exec_val=$(grep -m1 '^Exec=' "$file" | cut -d'=' -f2-)
-
-    # 5. Check required keys
-    if [ -z "$name_val" ]; then
-        echo "error: 'Name' key is required but missing" >&2
-        ((errors++))
-    fi
-
-    if [ -z "$type_val" ]; then
-        echo "error: 'Type' key is required but missing" >&2
-        ((errors++))
-    else
-        # 6. Check if Type is valid
-        case "$type_val" in
-            Application|Link|Directory) ;;
-            *)
-                echo "error: '$type_val' is not a valid Type (must be Application, Link, or Directory)" >&2
-                ((errors++))
-                ;;
-        esac
-
-        # 7. Type-specific required keys
-        if [ "$type_val" = "Application" ]; then
-            if [ -z "$exec_val" ]; then
-                echo "error: 'Exec' key is required for Type=Application" >&2
-                ((errors++))
-            fi
-        fi
-
-        if [ "$type_val" = "Link" ]; then
-            if ! grep -q '^URL=' "$file"; then
-                echo "error: 'URL' key is required for Type=Link" >&2
-                ((errors++))
-            fi
-        fi
-    fi
-
-    # 8. Basic Exec check (cannot be empty or just whitespace)
-    if [ -n "$exec_val" ] && [ -z "$(echo "$exec_val" | tr -d '[:space:]')" ]; then
-        echo "error: 'Exec' key is present but empty" >&2
-        ((errors++))
-    fi
-
-    # Return status
-    if [ "$errors" -gt 0 ]; then
-        echo "validate: $errors error(s) found in '$file'" >&2
-        return 1
-    else
-        echo "validate: '$file' passes basic checks" >&2
-        return 0
-    fi
-}
+if ! command -v desktop-file-validate 1>/dev/null; then
+	echo "desktop-file-validate: command not found!"
+	echo "Install the \"desktop-file-utils\" package and retry."
+	exit 1
+fi
 
 while ! desktop-file-validate ./*.desktop 2>/dev/null; do
 	echo "Fixing issues..."
