@@ -244,8 +244,9 @@ cd .. || exit 1
 
 _appimagetool() {
 	if ! command -v appimagetool >/dev/null; then
-		[ ! -f ./appimagetool ] && \
-		curl -#Lo appimagetool https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-"$(uname -m)".AppImage && \
+		if [ ! -f ./appimagetool ]; then
+			curl -#Lo appimagetool https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-"$(uname -m)".AppImage
+		fi
 		chmod a+x ./appimagetool
 		./appimagetool "$@"
 	else
