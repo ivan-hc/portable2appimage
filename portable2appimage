@@ -1,6 +1,6 @@
 #!/bin/sh
 
-P2AVER="1.0.7"
+P2AVER="1.0.8"
 
 FILE="$1"
 
@@ -56,6 +56,14 @@ if test -e ./*.deb; then
 		fi
 	else
 		echo "Missing command: ar (provided by \"binutils\")" && exit 1
+	fi
+fi
+
+if test -e ./*.apk; then
+	if command -v tar 1>/dev/null; then
+		tar fx ./*apk && rm -f ./*apk
+	else
+		echo "Missing command: tar" && exit 1
 	fi
 fi
 
@@ -135,7 +143,7 @@ else
 	cat <<-HEREDOC >> "AppRun"
 	#!/bin/sh
 	HERE=\$(dirname "\$(readlink -f "\$0")")
-	exec "\$HERE/$EXEC" "\$@"
+	exec "\$HERE$EXEC" "\$@"
 	HEREDOC
 	chmod a+x "AppRun"
 fi
