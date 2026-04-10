@@ -82,7 +82,7 @@ _use_7z() {
 }
 
 _7z_cmd() {
-	if ! command -v 7z 1>/dev/null; then
+	if command -v 7z 1>/dev/null; then
 		7z x "$@"
 	else
 		_use_7z "$@"
