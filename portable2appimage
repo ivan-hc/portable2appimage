@@ -1,6 +1,6 @@
 #!/bin/sh
 
-P2AVER="1.1.0"
+P2AVER="1.1.1"
 
 FILE="$1"
 
@@ -38,6 +38,23 @@ cd "$APP"-workdir.tmp || exit 1
 # Check if FILE is an archive
 ################################################
 
+_use_busybox_debian() {
+	if [ ! -f ../busybox-debian ]; then
+		wget -q https://github.com/ivan-hc/busybox-appimage/releases/download/continuous/busybox-"$(uname -m)"-debian-static -O ../busybox-debian && chmod a+x ../busybox-debian || exit 1
+		../busybox-debian "$@"
+	else
+		../busybox-debian "$@"
+	fi
+}
+
+_ar_cmd() {
+	if command -v ar 1>/dev/null; then
+		ar x "$@"
+	else
+		_use_busybox_debian ar x "$@"
+	fi
+}
+
 _use_busybox() {
 	if [ ! -f ../busybox ]; then
 		wget -q https://github.com/ivan-hc/busybox-appimage/releases/download/continuous/busybox-"$(uname -m)"-static -O ../busybox && chmod a+x ../busybox || exit 1
@@ -63,7 +80,6 @@ _unzip_cmd() {
 	fi
 }
 
-
 _use_7z() {
 	if [ ! -f ../7zz ]; then
 		_7z_download_page=$(curl -Ls https://www.7-zip.org/download.html | tr '">< ' '\n' | grep -i "http.*download.*linux.*tar")
@@ -86,14 +102,6 @@ _7z_cmd() {
 		7z x "$@"
 	else
 		_use_7z "$@"
-	fi
-}
-
-_ar_cmd() {
-	if command -v ar 1>/dev/null; then
-		ar x "$@"
-	else
-		echo "Missing command: ar (provided by \"binutils\")" && exit 1
 	fi
 }
 
