@@ -1,6 +1,6 @@
 #!/bin/sh
 
-P2AVER="1.0.9"
+P2AVER="1.1.0"
 
 FILE="$1"
 
@@ -193,42 +193,6 @@ else
 	HEREDOC
 fi
 
-if ! command -v desktop-file-validate 1>/dev/null; then
-	echo "desktop-file-validate: command not found!"
-	echo "Install the \"desktop-file-utils\" package and retry."
-	exit 1
-fi
-
-while ! desktop-file-validate ./*.desktop 2>/dev/null; do
-	echo "Fixing issues..."
-
-	# 1. Remove duplicate [Desktop Entry] headers (keep the first)
-	sed -i '0,/^\[Desktop Entry\]/!{/^\[Desktop Entry\]/d}' ./*.desktop
-
-	# 2. Remove deprecated Encoding keys
-	sed -i '/^Encoding=/d' ./*.desktop
-
-	# 3. Remove duplicate keys in [Desktop Entry] (keep first occurrence)
-	for key in Name Exec Icon Terminal Type Categories Comment; do
-		sed -i "0,/^$key=/!{/^$key=/d}" ./*.desktop
-	done
-
-	# 4. Fix Categories: remove unregistered values
-	STANDARD_CATS="AudioVideo|Development|Education|Game|Graphics|Network|Office|Settings|System|Utility"
-	awk -v cats="$STANDARD_CATS" '
-	/^Categories=/ {
-		split(substr($0,12), a, ";")
-		out="Categories="
-		for (i in a) {
-			if (a[i] ~ "^("cats")$") out=out a[i] ";"
-		}
-		print out
-		next
-	}
-	{print}
-	' ./*.desktop > "$APP.tmp" && mv "$APP.tmp" ./*.desktop
-done
-
 # Add icon
 # Get icon name from .desktop file (strip path, extension, and prefix)
 ICON_ENTRY=$(cat ./*.desktop | grep "^Icon=" | head -1 | sed 's:.*/::' | sed 's/.png//g; s/.svg//g; s/Icon=//g')
@@ -277,15 +241,50 @@ _appimagetool() {
 
 [ -z "$arch" ] && arch=$(uname -m)
 
-if [ -n "$4" ]; then
-	UPINFO="gh-releases-zsync|$4|*$arch.AppImage.zsync"
-	ARCH="$arch" VERSION="$VERSION" _appimagetool "$APPDIR" 2>&1
-elif [ -n "$UPINFO" ]; then
-	UPINFO="gh-releases-zsync|$UPINFO|*$arch.AppImage.zsync"
-	ARCH="$arch" VERSION="$VERSION" _appimagetool -u "$UPINFO" "$APPDIR" 2>&1
-else
-	ARCH="$arch" VERSION="$VERSION" _appimagetool -u "$UPINFO" "$APPDIR" 2>&1
-fi
+_export_to_appimage() {
+	if [ -n "$4" ]; then
+		UPINFO="gh-releases-zsync|$4|*$arch.AppImage.zsync"
+		ARCH="$arch" VERSION="$VERSION" _appimagetool "$APPDIR" 2>&1
+	elif [ -n "$UPINFO" ]; then
+		UPINFO="gh-releases-zsync|$UPINFO|*$arch.AppImage.zsync"
+		ARCH="$arch" VERSION="$VERSION" _appimagetool -u "$UPINFO" "$APPDIR" 2>&1
+	else
+		ARCH="$arch" VERSION="$VERSION" _appimagetool -u "$UPINFO" "$APPDIR" 2>&1
+	fi
+}
+
+_export_to_appimage
+
+while ! ls ./*.AppImage >/dev/null 2>&1; do
+	echo "Fixing issues..."
+
+	# 1. Remove duplicate [Desktop Entry] headers (keep the first)
+	sed -i '0,/^\[Desktop Entry\]/!{/^\[Desktop Entry\]/d}' "$APPDIR"/*.desktop
+
+	# 2. Remove deprecated Encoding keys
+	sed -i '/^Encoding=/d' "$APPDIR"/*.desktop
+
+	# 3. Remove duplicate keys in [Desktop Entry] (keep first occurrence)
+	for key in Name Exec Icon Terminal Type Categories Comment; do
+		sed -i "0,/^$key=/!{/^$key=/d}" "$APPDIR"/*.desktop
+	done
+
+	# 4. Fix Categories: remove unregistered values
+	STANDARD_CATS="AudioVideo|Development|Education|Game|Graphics|Network|Office|Settings|System|Utility"
+	awk -v cats="$STANDARD_CATS" '
+	/^Categories=/ {
+		split(substr($0,12), a, ";")
+		out="Categories="
+		for (i in a) {
+			if (a[i] ~ "^("cats")$") out=out a[i] ";"
+		}
+		print out
+		next
+	}
+	{print}
+	' "$APPDIR"/*.desktop > "$APP.tmp" && mv "$APP.tmp" "$APPDIR"/*.desktop
+	_export_to_appimage 2>/dev/null
+done
 
 if ! ls ./*.AppImage >/dev/null 2>&1; then
 	echo "No AppImage available."
