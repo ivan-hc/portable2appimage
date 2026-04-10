@@ -1,6 +1,6 @@
 #!/bin/sh
 
-P2AVER="1.0.9"
+P2AVER="1.0.10"
 
 FILE="$1"
 
@@ -193,41 +193,37 @@ else
 	HEREDOC
 fi
 
-if ! command -v desktop-file-validate 1>/dev/null; then
-	echo "desktop-file-validate: command not found!"
-	echo "Install the \"desktop-file-utils\" package and retry."
-	exit 1
-fi
+if command -v desktop-file-validate 1>/dev/null; then
+	while ! desktop-file-validate ./*.desktop 2>/dev/null; do
+		echo "Fixing issues..."
 
-while ! desktop-file-validate ./*.desktop 2>/dev/null; do
-	echo "Fixing issues..."
+		# 1. Remove duplicate [Desktop Entry] headers (keep the first)
+		sed -i '0,/^\[Desktop Entry\]/!{/^\[Desktop Entry\]/d}' ./*.desktop
 
-	# 1. Remove duplicate [Desktop Entry] headers (keep the first)
-	sed -i '0,/^\[Desktop Entry\]/!{/^\[Desktop Entry\]/d}' ./*.desktop
+		# 2. Remove deprecated Encoding keys
+		sed -i '/^Encoding=/d' ./*.desktop
 
-	# 2. Remove deprecated Encoding keys
-	sed -i '/^Encoding=/d' ./*.desktop
+		# 3. Remove duplicate keys in [Desktop Entry] (keep first occurrence)
+		for key in Name Exec Icon Terminal Type Categories Comment; do
+			sed -i "0,/^$key=/!{/^$key=/d}" ./*.desktop
+		done
 
-	# 3. Remove duplicate keys in [Desktop Entry] (keep first occurrence)
-	for key in Name Exec Icon Terminal Type Categories Comment; do
-		sed -i "0,/^$key=/!{/^$key=/d}" ./*.desktop
-	done
-
-	# 4. Fix Categories: remove unregistered values
-	STANDARD_CATS="AudioVideo|Development|Education|Game|Graphics|Network|Office|Settings|System|Utility"
-	awk -v cats="$STANDARD_CATS" '
-	/^Categories=/ {
-		split(substr($0,12), a, ";")
-		out="Categories="
-		for (i in a) {
-			if (a[i] ~ "^("cats")$") out=out a[i] ";"
+		# 4. Fix Categories: remove unregistered values
+		STANDARD_CATS="AudioVideo|Development|Education|Game|Graphics|Network|Office|Settings|System|Utility"
+		awk -v cats="$STANDARD_CATS" '
+		/^Categories=/ {
+			split(substr($0,12), a, ";")
+			out="Categories="
+			for (i in a) {
+				if (a[i] ~ "^("cats")$") out=out a[i] ";"
+			}
+			print out
+			next
 		}
-		print out
-		next
-	}
-	{print}
-	' ./*.desktop > "$APP.tmp" && mv "$APP.tmp" ./*.desktop
-done
+		{print}
+		' ./*.desktop > "$APP.tmp" && mv "$APP.tmp" ./*.desktop
+	done
+fi
 
 # Add icon
 # Get icon name from .desktop file (strip path, extension, and prefix)
