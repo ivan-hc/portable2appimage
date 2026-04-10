@@ -1,6 +1,6 @@
 #!/bin/sh
 
-P2AVER="1.0.8"
+P2AVER="1.0.9"
 
 FILE="$1"
 
@@ -38,57 +38,78 @@ cd "$APP"-workdir.tmp || exit 1
 # Check if FILE is an archive
 ################################################
 
-if test -e ./*7z; then
-	if command -v 7z 1>/dev/null; then
-		7z x ./*7z 2>/dev/null && rm -f ./*7z
+_use_busybox() {
+	if [ ! -f ../busybox ]; then
+		wget -q https://github.com/ivan-hc/busybox-appimage/releases/download/continuous/busybox-"$(uname -m)"-static -O ../busybox && chmod a+x ../busybox || exit 1
+		../busybox "$@"
 	else
-		echo "Missing command: 7z" && exit 1
+		../busybox "$@"
 	fi
-fi
+}
 
-if test -e ./*.deb; then
-	if command -v ar 1>/dev/null; then
-		ar x ./*.deb && rm -f ./*.deb
-		if command -v tar 1>/dev/null; then
-			tar fx ./data.tar* && rm -f ./*tar.*
-		else
-			echo "Missing command: tar" && exit 1
+_tar_cmd() {
+	if command -v tar 1>/dev/null; then
+		tar fx "$@"
+	else
+		_use_busybox tar fx "$@"
+	fi
+}
+
+_unzip_cmd() {
+	if command -v unzip 1>/dev/null; then
+		unzip -qq "$@"
+	else
+		_use_busybox unzip -qq "$@"
+	fi
+}
+
+
+_use_7z() {
+	if [ ! -f ../7zz ]; then
+		_7z_download_page=$(curl -Ls https://www.7-zip.org/download.html | tr '">< ' '\n' | grep -i "http.*download.*linux.*tar")
+		if [ "$(uname -m )" = x86_64 ]; then
+			wget -q "$(echo "$_7z_download_page" | grep -i x64 | head -1)" -O ../7z.tar.xz
+		elif [ "$(uname -m )" = aarch64 ]; then
+			wget -q "$(echo "$_7z_download_page" | grep -i arm64 | head -1)" -O ../7z.tar.xz
+		elif [ "$(uname -m )" = i686 ]; then
+			wget -q "$(echo "$_7z_download_page" | grep -i x86 | head -1)" -O ../7z.tar.xz
 		fi
+		_tar_cmd ../*tar* 7zz && mv 7zz ../ && rm -f ../7z.tar.xz
+		../7zz x "$@"
+	else
+		../7zz x "$@"
+	fi
+}
+
+_7z_cmd() {
+	if ! command -v 7z 1>/dev/null; then
+		7z x "$@"
+	else
+		_use_7z "$@"
+	fi
+}
+
+_ar_cmd() {
+	if command -v ar 1>/dev/null; then
+		ar x "$@"
 	else
 		echo "Missing command: ar (provided by \"binutils\")" && exit 1
 	fi
-fi
+}
 
-if test -e ./*.apk; then
-	if command -v tar 1>/dev/null; then
-		tar fx ./*apk && rm -f ./*apk
-	else
-		echo "Missing command: tar" && exit 1
-	fi
-fi
-
-if test -e ./*tar.*; then
-	if command -v tar 1>/dev/null; then
-		tar fx ./*tar.* && rm -f ./*tar.*
-	else
-		echo "Missing command: tar" && exit 1
-	fi
-fi
-
-if test -e ./*tbz; then
-	if command -v tar 1>/dev/null; then
-		tar fx ./*tbz && rm -f ./*tbz
-	else
-		echo "Missing command: tar" && exit 1
-	fi
-fi
-
-if test -e ./*zip; then
-	if command -v unzip 1>/dev/null; then
-		unzip -qq ./*zip 1>/dev/null && rm -f ./*zip
-	else
-		echo "Missing command: unzip" && exit 1
-	fi
+if test -e ./*.7z; then
+	_7z_cmd ./*.7z 2>/dev/null && rm -f ./*.7z
+elif test -e ./*.deb; then
+	_ar_cmd ./*.deb && rm -f ./*.deb ./control*tar*
+	_tar_cmd ./data.tar* && rm -f ./*tar.*
+elif test -e ./*.apk; then
+	_tar_cmd ./*apk && rm -f ./*apk
+elif test -e ./*tar.*; then
+	_tar_cmd ./*tar.* && rm -f ./*tar.*
+elif test -e ./*tbz; then
+	_tar_cmd ./*tbz && rm -f ./*tbz
+elif test -e ./*zip; then
+	_unzip_cmd ./*zip 1>/dev/null && rm -f ./*zip
 fi
 
 mv ./* ../"$APPDIR"/ && mv ../"$APPDIR" ./ && cd "$APPDIR" || exit 1
