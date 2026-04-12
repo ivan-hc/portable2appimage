@@ -1,6 +1,6 @@
 #!/bin/sh
 
-P2AVER="1.1.1"
+P2AVER="1.1.2"
 
 FILE="$1"
 
@@ -107,6 +107,9 @@ _7z_cmd() {
 
 if test -e ./*.7z; then
 	_7z_cmd ./*.7z 2>/dev/null && rm -f ./*.7z
+elif test -e ./*.rpm; then
+	_7z_cmd ./*.rpm 2>/dev/null && rm -f ./*.rpm
+	_7z_cmd ./*.cpio 2>/dev/null && rm -f ./*.cpio
 elif test -e ./*.deb; then
 	_ar_cmd ./*.deb && rm -f ./*.deb ./control*tar*
 	_tar_cmd ./data.tar* && rm -f ./*tar.*
