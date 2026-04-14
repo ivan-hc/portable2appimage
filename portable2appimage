@@ -1,6 +1,6 @@
 #!/bin/sh
 
-P2AVER="1.1.2"
+P2AVER="1.1.3"
 
 FILE="$1"
 
@@ -38,12 +38,12 @@ cd "$APP"-workdir.tmp || exit 1
 # Check if FILE is an archive
 ################################################
 
-_use_busybox_debian() {
-	if [ ! -f ../busybox-debian ]; then
-		wget -q https://github.com/ivan-hc/busybox-appimage/releases/download/continuous/busybox-"$(uname -m)"-debian-static -O ../busybox-debian && chmod a+x ../busybox-debian || exit 1
-		../busybox-debian "$@"
+_use_busybox() {
+	if [ ! -f ../busybox ]; then
+		wget -q https://github.com/ivan-hc/busybox-appimage/releases/download/continuous/busybox-"$(uname -m)"-static -O ../busybox && chmod a+x ../busybox || exit 1
+		../busybox "$@"
 	else
-		../busybox-debian "$@"
+		../busybox "$@"
 	fi
 }
 
@@ -51,16 +51,7 @@ _ar_cmd() {
 	if command -v ar 1>/dev/null; then
 		ar x "$@"
 	else
-		_use_busybox_debian ar x "$@"
-	fi
-}
-
-_use_busybox() {
-	if [ ! -f ../busybox ]; then
-		wget -q https://github.com/ivan-hc/busybox-appimage/releases/download/continuous/busybox-"$(uname -m)"-static -O ../busybox && chmod a+x ../busybox || exit 1
-		../busybox "$@"
-	else
-		../busybox "$@"
+		_use_busybox ar x "$@"
 	fi
 }
 
