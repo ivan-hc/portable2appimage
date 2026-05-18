@@ -1,6 +1,6 @@
 #!/bin/sh
 
-P2AVER="1.1.3"
+P2AVER="1.1.4"
 
 FILE="$1"
 
@@ -35,12 +35,37 @@ cp "$FILE" "$APP"-workdir.tmp/
 cd "$APP"-workdir.tmp || exit 1
 
 ################################################
+# ALTERNATE CURL AND WGET
+################################################
+
+# Read online text
+_use_online_reading_tool() {
+	local url="$1"
+	if command -v curl >/dev/null 2>&1; then
+		curl -Ls "$url" 2>/dev/null
+	elif command -v wget >/dev/null 2>&1; then
+		wget -q -O - "$url" 2>/dev/null
+	fi
+}
+
+# Download files
+_use_online_downloader() {
+	local file="$2"
+	local url="$1"
+	if command -v curl >/dev/null 2>&1; then
+		curl -s -Lo "$file" "$url" 2>/dev/null
+	elif command -v wget >/dev/null 2>&1; then
+		wget -q "$url" -O "$file" 2>/dev/null
+	fi
+}
+
+################################################
 # Check if FILE is an archive
 ################################################
 
 _use_busybox() {
 	if [ ! -f ../busybox ]; then
-		wget -q https://github.com/ivan-hc/busybox-appimage/releases/download/continuous/busybox-"$(uname -m)"-static -O ../busybox && chmod a+x ../busybox || exit 1
+		_use_online_downloader https://github.com/ivan-hc/busybox-appimage/releases/download/continuous/busybox-"$(uname -m)"-static ../busybox && chmod a+x ../busybox || exit 1
 		../busybox "$@"
 	else
 		../busybox "$@"
@@ -73,13 +98,13 @@ _unzip_cmd() {
 
 _use_7z() {
 	if [ ! -f ../7zz ]; then
-		_7z_download_page=$(curl -Ls https://www.7-zip.org/download.html | tr '">< ' '\n' | grep -i "http.*download.*linux.*tar")
+		_7z_download_page=$(_use_online_reading_tool https://www.7-zip.org/download.html | tr '">< ' '\n' | grep -i "http.*download.*linux.*tar")
 		if [ "$(uname -m )" = x86_64 ]; then
-			wget -q "$(echo "$_7z_download_page" | grep -i x64 | head -1)" -O ../7z.tar.xz
+			_use_online_downloader "$(echo "$_7z_download_page" | grep -i x64 | head -1)" ../7z.tar.xz
 		elif [ "$(uname -m )" = aarch64 ]; then
-			wget -q "$(echo "$_7z_download_page" | grep -i arm64 | head -1)" -O ../7z.tar.xz
+			_use_online_downloader "$(echo "$_7z_download_page" | grep -i arm64 | head -1)" ../7z.tar.xz
 		elif [ "$(uname -m )" = i686 ]; then
-			wget -q "$(echo "$_7z_download_page" | grep -i x86 | head -1)" -O ../7z.tar.xz
+			_use_online_downloader "$(echo "$_7z_download_page" | grep -i x86 | head -1)" ../7z.tar.xz
 		fi
 		_tar_cmd ../*tar* 7zz && mv 7zz ../ && rm -f ../7z.tar.xz
 		../7zz x "$@"
@@ -219,7 +244,7 @@ if [ -z "$icon_found" ]; then
 	if [ -n "$ICON" ]; then
 		cp "$ICON" ./
 	else
-		wget -q "https://portable-linux-apps.github.io/icons/$APP.png" -O "$ICON_ENTRY.png" 2>/dev/null || printf '\x89PNG\r\n\x1a\n' > "$ICON_ENTRY.png"
+		_use_online_downloader "https://portable-linux-apps.github.io/icons/$APP.png" "$ICON_ENTRY.png" 2>/dev/null || printf '\x89PNG\r\n\x1a\n' > "$ICON_ENTRY.png"
 	fi
 fi
 
@@ -232,7 +257,7 @@ cd .. || exit 1
 _appimagetool() {
 	if ! command -v appimagetool >/dev/null; then
 		if [ ! -f ./appimagetool ]; then
-			curl -#Lo appimagetool https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-"$(uname -m)".AppImage
+			_use_online_downloader https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-"$(uname -m)".AppImage ./appimagetool
 		fi
 		chmod a+x ./appimagetool
 		./appimagetool "$@"
