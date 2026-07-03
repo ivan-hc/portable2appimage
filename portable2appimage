@@ -1,6 +1,6 @@
 #!/bin/sh
 
-P2AVER="1.1.4"
+P2AVER="1.1.5"
 
 FILE="$1"
 
@@ -240,7 +240,9 @@ done
 
 # Copy icon or download fallback
 if [ -z "$icon_found" ]; then
-	ICON=$(find . -maxdepth 10 -type f \( -iname "$ICON_ENTRY.png" -o -iname "$ICON_ENTRY.svg" -o -iname "$ICON_ENTRY.xpm" \) 2>/dev/null | head -1)
+	ICON_CANDIDATES=$(find . -maxdepth 10 -type f \( -iname "$ICON_ENTRY.png" -o -iname "$ICON_ENTRY.svg" -o -iname "$ICON_ENTRY.xpm" \) 2>/dev/null)
+	ICON=$(printf '%s\n' "$ICON_CANDIDATES" | grep -i '\.svg$' | head -1)
+	[ -z "$ICON" ] && [ -n "$ICON_CANDIDATES" ] && ICON=$(printf '%s\n' "$ICON_CANDIDATES" | while read -r f; do printf '%s %s\n' "$(wc -c < "$f")" "$f"; done | sort -rn | head -1 | cut -d' ' -f2-)
 	if [ -n "$ICON" ]; then
 		cp "$ICON" ./
 	else
