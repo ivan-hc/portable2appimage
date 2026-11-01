@@ -1,6 +1,6 @@
 #!/bin/sh
 
-P2AVER="1.1.5"
+P2AVER="1.1.6"
 
 FILE="$1"
 
@@ -259,7 +259,7 @@ cd .. || exit 1
 _appimagetool() {
 	if ! command -v appimagetool >/dev/null; then
 		if [ ! -f ./appimagetool ]; then
-			_use_online_downloader https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-"$(uname -m)".AppImage ./appimagetool
+			_use_online_downloader https://github.com/ivan-hc/appimagetool/releases/download/continuous/appimagetool-"$(uname -m)".AppImage ./appimagetool
 		fi
 		chmod a+x ./appimagetool
 		./appimagetool "$@"
